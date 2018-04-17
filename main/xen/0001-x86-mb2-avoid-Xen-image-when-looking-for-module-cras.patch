@@ -1,0 +1,69 @@
+From c8f4f45e04dd782ac5dfdf58866339ac97186324 Mon Sep 17 00:00:00 2001
+From: Daniel Kiper <daniel.kiper@oracle.com>
+Date: Wed, 20 Dec 2017 15:42:13 +0100
+Subject: [PATCH] x86/mb2: avoid Xen image when looking for module/crashkernel
+ position
+
+Commit e22e1c4 (x86/EFI: avoid Xen image when looking for module/kexec
+position) added relevant check for EFI case. However, since commit
+f75a304 (x86: add multiboot2 protocol support for relocatable images)
+Multiboot2 compatible bootloaders are able to relocate Xen image too.
+So, we have to avoid also Xen image region in such cases.
+
+Reported-by: Andrew Cooper <andrew.cooper3@citrix.com>
+Reported-by: Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
+Signed-off-by: Daniel Kiper <daniel.kiper@oracle.com>
+Reviewed-by: Jan Beulich <jbeulich@suse.com>
+master commit: 9589927e5bf9e123ec42b6e0b0809f153bd92732
+master date: 2017-12-12 14:30:53 +0100
+---
+ xen/arch/x86/setup.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/xen/arch/x86/setup.c b/xen/arch/x86/setup.c
+index 32bb02e3a5..2e10c6bdf4 100644
+--- a/xen/arch/x86/setup.c
++++ b/xen/arch/x86/setup.c
+@@ -653,7 +653,7 @@ void __init noreturn __start_xen(unsigned long mbi_p)
+     module_t *mod = (module_t *)__va(mbi->mods_addr);
+     unsigned long nr_pages, raw_max_page, modules_headroom, *module_map;
+     int i, j, e820_warn = 0, bytes = 0;
+-    bool acpi_boot_table_init_done = false;
++    bool acpi_boot_table_init_done = false, relocated = false;
+     struct domain *dom0;
+     struct ns16550_defaults ns16550 = {
+         .data_bits = 8,
+@@ -904,8 +904,10 @@ void __init noreturn __start_xen(unsigned long mbi_p)
+         mod[i].reserved = 0;
+     }
+ 
+-    if ( efi_enabled(EFI_LOADER) )
++    if ( xen_phys_start )
+     {
++        relocated = true;
++
+         /*
+          * This needs to remain in sync with xen_in_range() and the
+          * respective reserve_e820_ram() invocation below.
+@@ -1098,8 +1100,7 @@ void __init noreturn __start_xen(unsigned long mbi_p)
+ 
+             /* Don't overlap with other modules (or Xen itself). */
+             end = consider_modules(s, e, size, mod,
+-                                   mbi->mods_count + efi_enabled(EFI_LOADER),
+-                                   j);
++                                   mbi->mods_count + relocated, j);
+ 
+             if ( highmem_start && end > highmem_start )
+                 continue;
+@@ -1126,7 +1127,7 @@ void __init noreturn __start_xen(unsigned long mbi_p)
+         {
+             /* Don't overlap with modules (or Xen itself). */
+             e = consider_modules(s, e, PAGE_ALIGN(kexec_crash_area.size), mod,
+-                                 mbi->mods_count + efi_enabled(EFI_LOADER), -1);
++                                 mbi->mods_count + relocated, -1);
+             if ( s >= e )
+                 break;
+             if ( e > kexec_crash_area_limit )
+-- 
+2.15.1
+
