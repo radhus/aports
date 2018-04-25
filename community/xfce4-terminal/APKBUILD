@@ -1,0 +1,34 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=xfce4-terminal
+pkgver=0.8.7.3
+pkgrel=0
+pkgdesc="A modern terminal emulator primarly for the Xfce desktop environment"
+url="https://xfce.org/projects/terminal/"
+arch="all"
+license="GPL-2.0"
+depends="startup-notification hicolor-icon-theme"
+makedepends="exo-dev vte3-dev libxfce4ui-dev"
+replaces=terminal
+subpackages="$pkgname-doc $pkgname-lang"
+source="http://archive.xfce.org/src/apps/${pkgname}/${pkgver%.*.*}/xfce4-terminal-${pkgver}.tar.bz2"
+builddir="$srcdir"/xfce4-terminal-$pkgver
+
+build() {
+	cd "$builddir"
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--libexecdir=/usr/lib/xfce4 \
+		--localstatedir=/var \
+		--disable-static
+	make
+}
+
+package() {
+	cd "$builddir"
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="e7ff54c877d5ca20820210125b13fdd1bc6323ff8d56400ea284e1968eea6a907392e1a1edd78b06b5cf4595d1562fa1f86fce6d5f0c8cb09ba4857e1587a4a6  xfce4-terminal-0.8.7.3.tar.bz2"
