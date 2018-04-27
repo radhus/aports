@@ -19,3 +19,13 @@ profile_xen() {
 	apks="$apks ethtool xen xen-bridge"
 #	apkovl="genapkovl-xen.sh"
 }
+
+profile_domu() {
+	profile_standard
+	title="Xen domU"
+	desc="Xen domU"
+	arch="x86_64"
+	kernel_cmdline="console=hvc0"
+	apks="alpine-base alpine-mirrors bridge busybox chrony e2fsprogs libressl openssh tzdata"
+	initfs_features="base bootchart squashfs ext4 virtio"
+}
