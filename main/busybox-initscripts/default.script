@@ -11,6 +11,11 @@ RESOLV_CONF="/etc/resolv.conf"
 [ -f $UDHCPC_CONF ] && . $UDHCPC_CONF
 [ -f $UDHCPC_INTERFACE_CONF ] && . $UDHCPC_INTERFACE_CONF
 
+table=""
+if [ "$ROUTING_TABLE" != "" ]; then
+	table="table $ROUTING_TABLE"
+fi
+
 export broadcast
 export dns
 export domain
@@ -20,6 +25,7 @@ export mask
 export metric
 export router
 export subnet
+export table
 
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
@@ -64,7 +70,7 @@ routes() {
 		[ "$i" = "$interface" ] && return
 	done
 	local gw= num=
-	while ip -4 route del default via dev $interface 2>/dev/null; do
+	while ip -4 route del default via dev $interface $table 2>/dev/null; do
 		:
 	done
 	num=0
@@ -74,10 +80,11 @@ routes() {
 		# /32 instructs kernel to always use routing for all outgoing packets
 		# (they can never be sent to local subnet - there is no local subnet for /32).
 		# Used in datacenters, avoids the need for private ip-addresses between two hops.
-			ip -4 route add $gw dev $interface
+			ip -4 route add $gw dev $interface $table
 		fi
 		ip -4 route add 0.0.0.0/0 via $gw dev $interface \
-			metric $(( $num + ${IF_METRIC:-$(calc_metric)} ))
+			metric $(( $num + ${IF_METRIC:-$(calc_metric)} )) \
+			$table
 		num=$(( $num + 1 ))
 	done
 }
@@ -120,7 +127,7 @@ renew() {
 
 	local i
 	for i in $router; do
-		if ! ip -4 route show | grep ^default | grep $i; then
+		if ! ip -4 route show $table | grep ^default | grep $i; then
 			routes
 			break
 		fi
