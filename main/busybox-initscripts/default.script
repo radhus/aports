@@ -5,9 +5,11 @@
 
 UDHCPC="/etc/udhcpc"
 UDHCPC_CONF="$UDHCPC/udhcpc.conf"
+UDHCPC_INTERFACE_CONF="$UDHCPC/udhcpc.$interface.conf"
 
 RESOLV_CONF="/etc/resolv.conf"
 [ -f $UDHCPC_CONF ] && . $UDHCPC_CONF
+[ -f $UDHCPC_INTERFACE_CONF ] && . $UDHCPC_INTERFACE_CONF
 
 export broadcast
 export dns
