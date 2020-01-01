@@ -2,12 +2,12 @@
 # Maintainer: Natanael Copa <ncopa@alpinelinux.org>
 pkgname=xen
 pkgver=4.13.0
-pkgrel=0
+pkgrel=1
 pkgdesc="Xen hypervisor"
 url="https://www.xenproject.org/"
 arch="x86_64 armhf aarch64" # enable armv7 when builds with gcc8
 license="GPL"
-depends="bash iproute2 logrotate"
+depends="$pkgname-tools $pkgname-qemu bash iproute2 logrotate"
 depends_dev="openssl-dev python2-dev e2fsprogs-dev gettext zlib-dev ncurses-dev
 	dev86 texinfo perl pciutils-dev glib-dev yajl-dev libnl3-dev
 	spice-dev gnutls-dev curl-dev libaio-dev lzo-dev xz-dev util-linux-dev
@@ -173,7 +173,7 @@ install=""
 #	subpackages="$pkgname-dbg"
 #fi
 subpackages="$subpackages $pkgname-doc $pkgname-dev $pkgname-libs
-	$pkgname-hypervisor $pkgname-bridge"
+	$pkgname-hypervisor $pkgname-bridge $pkgname-qemu $pkgname-tools"
 
 # grep _VERSION= stubdom/configure
 _ZLIB_VERSION="1.2.3"
@@ -439,6 +439,45 @@ EOF
 		#dhcp-host=otherhost,10.0.4.4
 EOF
 
+}
+
+qemu() {
+	depends="$pkgname-tools"
+	pkgdesc="Xen QEMU tools"
+	mkdir -p "$subpkgdir"/etc/init.d \
+		"$subpkgdir"/etc/conf.d \
+		"$subpkgdir"/etc/xen/scripts/ \
+		"$subpkgdir"/usr/share/xen \
+		"$subpkgdir"/usr/lib/xen/bin \
+		"$subpkgdir"/usr/bin \
+
+	mv "$pkgdir"/etc/init.d/xenqemu \
+		"$subpkgdir"/etc/init.d/
+	mv "$pkgdir"/etc/conf.d/xenqemu \
+		"$subpkgdir"/etc/conf.d/
+	mv "$pkgdir"/etc/xen/scripts/qemu-ifup \
+		"$subpkgdir"/etc/xen/scripts/
+	mv "$pkgdir"/usr/share/xen/qemu \
+		"$subpkgdir"/usr/share/xen/
+	mv "$pkgdir"/usr/share/qemu-xen \
+		"$subpkgdir"/usr/share/
+	mv "$pkgdir"/usr/lib/xen/bin/qemu* \
+		"$subpkgdir"/usr/lib/xen/bin/
+	mv "$pkgdir"/usr/bin/qemu* \
+		"$subpkgdir"/usr/bin/
+}
+
+tools() {
+	depends=
+	pkgdesc="Xen tools"
+	mkdir -p "$subpkgdir"/usr
+
+	mv "$pkgdir"/etc "$subpkgdir"/
+	mv "$pkgdir"/usr/bin \
+		"$pkgdir"/usr/lib \
+		"$pkgdir"/usr/sbin \
+		"$pkgdir"/usr/share \
+		"$subpkgdir"/usr/
 }
 
 sha512sums="5b2ded9a2fe3f7ddf40eed1fa9858baead06233a01eb6099cc45b3c78b6c3823acfe7b731910733e87125dfa49d08c53f74c215fb1b320a92b44b87a0a105225  xen-4.13.0.tar.gz
